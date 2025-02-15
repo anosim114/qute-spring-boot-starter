@@ -1,10 +1,8 @@
 package net.snemeis;
 
 import io.quarkus.qute.*;
-import io.quarkus.qute.TemplateInstance.Initializer;
 import io.quarkus.qute.TemplateLocator.TemplateLocation;
 import jdk.jshell.spi.ExecutionControl.NotImplementedException;
-import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -13,7 +11,9 @@ import org.springframework.boot.autoconfigure.web.reactive.WebFluxAutoConfigurat
 import org.springframework.boot.autoconfigure.web.servlet.WebMvcAutoConfiguration;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.ApplicationContext;
+import org.springframework.context.MessageSource;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.web.servlet.ViewResolver;
 
 import java.io.*;
@@ -24,8 +24,8 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 
 @AutoConfiguration(after = { WebMvcAutoConfiguration.class, WebFluxAutoConfiguration.class })
 @EnableConfigurationProperties(QuteProperties.class)
@@ -35,12 +35,14 @@ public class EngineProducer {
 
     public static final String INJECT_NAMESPACE = "inject";
     public static final String CDI_NAMESPACE = "cdi";
-    public static final String DEPENDENT_INSTANCES = "q_dep_inst";
 
-    private final Map<String, String> templateContents;
+    public static final String MSG_NAMESPACE = "msg";
+    public static final String MSG_LOCALE = "q_msg_locale";
+
     private final ApplicationContext context; // TODO: rename context, as spring would do it
     private final QuteProperties config;
     private final Engine engine;
+    private final MessageSource messageSource;
 
     public EngineProducer(
             QuteProperties config,
@@ -48,7 +50,8 @@ public class EngineProducer {
             List<ValueResolver> valueResolvers,
             List<NamespaceResolver> namespaceResolvers,
             List<ParserHook> parserHooks,
-            ApplicationContext context
+            ApplicationContext context,
+            MessageSource messageSource
 //            Environment environment
     ) {
         /* TODO: check what needs to be done here
@@ -57,8 +60,8 @@ public class EngineProducer {
             this.templateContents = Map.copyOf(context.getTemplateContents());  // needs to be read out when the application starts
          */
         this.config = config;
-        this.templateContents = new HashMap<>();
         this.context = context;
+        this.messageSource = messageSource;
 
         log.info("initializing something in qute starter");
 
@@ -126,6 +129,7 @@ public class EngineProducer {
         // Resolve @Named beans
         builder.addNamespaceResolver(NamespaceResolver.builder(INJECT_NAMESPACE).resolve(this::resolveInject).build());
         builder.addNamespaceResolver(NamespaceResolver.builder(CDI_NAMESPACE).resolve(this::resolveInject).build());
+        builder.addNamespaceResolver(NamespaceResolver.builder(MSG_NAMESPACE).resolve(this::resolveMessage).build());
         // Additional namespace resolvers
         for (NamespaceResolver namespaceResolver : namespaceResolvers) {
             builder.addNamespaceResolver(namespaceResolver);
@@ -162,23 +166,6 @@ public class EngineProducer {
 //            builder.addNamespaceResolver(provider);
 //        }
 
-        // Add a special initializer for templates that contain an inject/cdi namespace expressions
-        Map<String, Boolean> discoveredInjectTemplates = new HashMap<>();
-        builder.addTemplateInstanceInitializer(new Initializer() {
-
-            @Override
-            public void accept(TemplateInstance instance) {
-                Boolean hasInject = discoveredInjectTemplates.get(instance.getTemplate().getGeneratedId());
-                if (hasInject == null) {
-                    hasInject = hasInjectExpression(instance.getTemplate());
-                }
-                if (hasInject) {
-                    // Add dependent beans map if the template contains a cdi namespace expression
-                    instance.setAttribute(DEPENDENT_INSTANCES, new ConcurrentHashMap<>());
-                }
-            }
-        });
-
         builder.timeout(config.timeout);
         builder.useAsyncTimeout(config.useAsyncTimeout);
 
@@ -198,15 +185,6 @@ public class EngineProducer {
     @Bean
     ViewResolver quteViewResolver() {
         return new QuteViewResolver(config.cachingEnabled);
-    }
-
-    private void registerCustomLocators(EngineBuilder builder,
-                                        List<TemplateLocator> locators) {
-        if (locators != null && !locators.isEmpty()) {
-            for (TemplateLocator locator : locators) {
-                builder.addLocator(locator);
-            }
-        }
     }
 
     // Not needed for spring??
@@ -315,79 +293,29 @@ public class EngineProducer {
             contentType = "application/octet-stream";
         }
 
+        // TODO: use localeContextHolder?
         return new Variant(config.defaultLocale, config.defaultCharset, contentType);
     }
 
     private Object resolveInject(EvalContext ctx) {
         if (context.containsBean(ctx.getName())) {
-            Object bean = context.getBean(ctx.getName());
-
-            Object dependentInstances = ctx.getAttribute(EngineProducer.DEPENDENT_INSTANCES);
-
-            // TODO: is this block needed?
-            if (dependentInstances != null) {
-                @SuppressWarnings("unchecked")
-                ConcurrentMap<String, Object> existing = (ConcurrentMap<String, Object>) dependentInstances;
-                return existing.computeIfAbsent(ctx.getName(), name -> bean);
-            }
-
-            return bean;
+            return context.getBean(ctx.getName());
         }
 
         return Results.NotFound.from(ctx);
     }
 
-    private boolean hasInjectExpression(Template template) {
-        for (Expression expression : template.getExpressions()) {
-            if (isInjectExpression(expression)) {
-                return true;
-            }
-        }
-        return false;
-    }
+    private Object resolveMessage(EvalContext ctx) {
+        Locale locale = LocaleContextHolder.getLocale();
+        String key = ctx.getName();
+        var params = ctx.getParams()
+                .stream()
+                .map(ctx::evaluate)
+                .map(CompletionStage::toCompletableFuture)
+                .map(CompletableFuture::resultNow)
+                .toArray();
 
-    private boolean isInjectExpression(Expression expression) {
-        // check the namespace
-        String namespace = expression.getNamespace();
-        // if a namespcae is present, check if it's 'cdi' or 'inject'
-        if (namespace != null && (CDI_NAMESPACE.equals(namespace) || INJECT_NAMESPACE.equals(namespace))) {
-            // then it obviously has an inject statement
-            return true;
-        }
-        // else loop over other expression parts
-        for (Expression.Part part : expression.getParts()) {
-            // is this a virtual mehtod?
-            if (part.isVirtualMethod()) {
-                // get the paramters
-                for (Expression param : part.asVirtualMethod().getParameters()) {
-                    // if it is a literal, don't care
-                    if (param.isLiteral()) {
-                        continue;
-                    }
-                    // is it an inject expression?
-                    if (isInjectExpression(param)) {
-                        // then again, it obviously is true
-                        return true;
-                    }
-                }
-            }
-        }
-        // but per default return false
-        return false;
-    }
-
-    private void processDefaultTemplate(String path, List<Template> templates, QuteProperties config, Engine engine) {
-        if (engine.isTemplateLoaded(path)) {
-            return;
-        }
-        for (String suffix : config.suffixes) {
-            for (Template template : templates) {
-                if (template.getId().endsWith(suffix)) {
-                    engine.putTemplate(path, template);
-                    return;
-                }
-            }
-        }
+        return messageSource.getMessage(key, params, locale);
     }
 
     static class ResourceTemplateLocation implements TemplateLocation {

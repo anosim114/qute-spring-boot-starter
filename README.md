@@ -123,16 +123,15 @@ via the `cdi` and `inject` namespaces. So the following snippet is 100% valid:
 {inject:otherService.fetchSomethingElse()}
 ```
 
-### TODO: Qute Reference Guide 4.14. Type-safe Message Bundles
-
-> :info: this feature is still to be implemented
+### Qute Reference Guide 4.14. Type-safe Message Bundles
 
 This starter does not support type-safe message bundles,
 however some part of the syntax to retrieve messages
 from a message bundle is still valid:
 
 ```qute
-{msg:message(someKey,'some value passed through')}
+{msg:some-key('some', 'params', 'for the message')}
+{msg:some-other-key(oneVariable, 42)}
 ```
 
 ### Not supported features

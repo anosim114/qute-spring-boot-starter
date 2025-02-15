@@ -1,24 +1,34 @@
+import configs.TestLocaleConfig;
 import io.quarkus.qute.Qute;
 import net.snemeis.EngineProducer;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.TestComponent;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.MessageSource;
+import org.springframework.context.annotation.Import;
 import org.springframework.ui.ConcurrentModel;
 import org.springframework.ui.Model;
 
 import java.util.Locale;
+import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 @SpringBootTest(classes = { EngineProducer.class, EngineProducerTest.SampleComponent.class })
+@Import(TestLocaleConfig.class)
 public class EngineProducerTest {
 
     @Autowired
     ApplicationContext context;
+    @Autowired
+    private MessageSource messageSource;
+
+    @Value("${spring.messages.basename}")
+    String messageBasename;
 
     @Test
     void Qute_engine_is_being_set() {
@@ -39,7 +49,7 @@ public class EngineProducerTest {
         String i18Result = sampleComponent.translate("test.one");
 
         assertEquals("{42}", numResult);
-        assertEquals("default message", i18Result);
+        assertEquals("this is a test message", i18Result);
     }
 
     @Test
@@ -75,6 +85,45 @@ public class EngineProducerTest {
                 .data(model.asMap())
                 .render();
         assertEquals("Hello World!", out2);
+    }
+
+    @Test
+    void qute_resolved_messages_via_msg_namespace_resolver() {
+        // prepare
+        System.out.println(messageBasename);
+        String message = messageSource.getMessage("name", null, "www", Locale.ENGLISH);
+
+        // execute
+        var template = Qute.engine().parse("Hello {msg:name}!");
+        var out = template.render();
+
+        // check
+        assertEquals(out, "Hello World!");
+    }
+
+    @Test
+    void qute_resolved_messages_with_params_via_msg_namespace_resolver() {
+        // prepare
+
+        // execute
+        var template = Qute.engine().parse("Hello {msg:parameterized(1, 2)}");
+        var out = template.render();
+
+        // check
+        assertEquals(out, "Hello One 1 two 2");
+    }
+
+    @Test
+    void qute_resolves_messages_with_variables_as_attributes() {
+        // prepare
+        var data = Map.of("v1", 1, "v2", "nitarou");
+
+        // execute
+        var template = Qute.engine().parse("Hello {msg:parameterized(v1, v2)}");
+        var out = template.render(data);
+
+        // check
+        assertEquals(out, "Hello One 1 two nitarou");
     }
 
     @TestComponent(value = "SampleComponent")
