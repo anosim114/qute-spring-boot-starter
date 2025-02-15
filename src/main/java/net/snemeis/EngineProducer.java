@@ -110,6 +110,7 @@ public class EngineProducer {
         // Remove standalone lines if desired
         builder.removeStandaloneLines(config.removeStandaloneLines);
 
+        // TODO: what's this?
         // Iteration metadata prefix
         builder.iterationMetadataPrefix(config.iterationMetadataPrefix);
 
