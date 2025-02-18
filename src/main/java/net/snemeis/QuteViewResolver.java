@@ -41,6 +41,7 @@ public class QuteViewResolver implements ViewResolver {
 
             @Override
             public void render(Map<String, ?> model, @NonNull HttpServletRequest request, @NonNull HttpServletResponse response) throws Exception {
+                // TODO: add RequestContext attribute to data
                 var html = template.render(model);
 
                 response.setContentType(getContentType());

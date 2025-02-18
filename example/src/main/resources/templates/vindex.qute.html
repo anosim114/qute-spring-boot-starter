@@ -6,63 +6,62 @@
   {#head}<meta content="some extra head">{/head}
   {#content}
     <div class="container">
-      <div class="row bg-light border p-3">{cdi:i18n.t('some.banner')}</div>
+      <div class="row bg-light border p-3">{msg:t('some.banner')}</div>
       <hr>
-      {hits}
-      {!{#include $advanced_filterbar}{/include}!}
-      {!{#include $filterbar}{/include}!}
+      {#include hits=hits $advanced_filterbar}{/include}
+      {#include filters=filters $filterbar}{/include}
       <hr>
-      {!{#include $search_nav hits={hits}}{/include}!}
-      {!{#include $product_results}{/include}!}
+      {#include $search_nav hits=hits}{/include}
+      {#include $product_results products=products}{/include}
       {! todo: this one just contains page links and items-per-page thing !}
-      {!{#include $search_nav hits={hits}}{/include}!}
+      {#include $search_nav hits=hits}{/include}
     </div>
   {/content}
 {/include}
 
-{#fragment id=advanced_filterbar hits rendered=false}
+{#fragment id=advanced_filterbar rendered=false}
    <div class="form-check form-switch">
      <input class="form-check-input" type="checkbox" role="switch" id="flexSwitchCheckDefault">
-     <label class="form-check-label" for="flexSwitchCheckDefault">{cdi:i18n.t('advanced-filter.toggle')}</label>
+     <label class="form-check-label" for="flexSwitchCheckDefault">{msg:t('advanced-filter.toggle')}</label>
    </div>
 {/fragment}
 
-{#fragment id=filterbar rendered=false}
+{#fragment filters id=filterbar rendered=false}
   <div>
-    <span>{cdi:i18n.t('filterbar.label')}:</span>
+    <span>{msg:t('filterbar.label')}:</span>
 
     {#each filters}
       <div class="d-inline mx-2 p-2 border-bottom border-secondary bg-secondary-subtle" style="cursor: pointer;">
-        {cdi:i18n.t(it)} <span>⏷</span>
+        {msg:t(it)} <span>⏷</span>
       </div>
    {/each}
-      <button type="button" class="btn text-primary">+ {cdi:i18n.t('filter.show-more')}</button>
+      <button type="button" class="btn text-primary">+ {msg:t('filter.show-more')}</button>
     {! Note: Kind of nasty that new divs get moved to the first indentation... !}
   </div>
 {/fragment}
 
 {#fragment id=search_nav rendered=false}
   <div class="row my-4">
-    <div class="col-md-auto fw-bold">{cdi:i18n.t('nav.hits', hits)}</div>
+    <div class="col-md-auto fw-bold">{msg:t('nav.hits', hits)}</div>
     <div class="col">
       <div class="d-inline">
-        <span class="mx-2">{cdi:i18n.t('nav.page')}:</span>
+        <span class="mx-2">{msg:t('nav.page')}:</span>
         <a href="#1" class="mx-1 text-primary-emphasis">1</a>
         <a href="#2" class="mx-1 text-primary">2</a>
         <a href="#3" class="mx-1 text-primary">3</a>
       </div>
       <div class="d-inline ms-5">
-        <span class="mx-2">{cdi:i18n.t('nav.sort.label')}:</span>
-        <a href="#1" class="mx-1 text-primary-emphasis">{cdi:i18n.t('nav.sort.rel')}</a>
-        <a href="#2" class="mx-1 text-primary">{cdi:i18n.t('nav.sort.asc')}</a>
-        <a href="#2" class="mx-1 text-primary">{cdi:i18n.t('nav.sort.desc')}</a>
+        <span class="mx-2">{msg:t('nav.sort.label')}:</span>
+        <a href="#1" class="mx-1 text-primary-emphasis">{msg:t('nav.sort.rel')}</a>
+        <a href="#2" class="mx-1 text-primary">{msg:t('nav.sort.asc')}</a>
+        <a href="#2" class="mx-1 text-primary">{msg:t('nav.sort.desc')}</a>
       </div>
     </div>
-    <div class="col-md-auto">{cdi:i18n.t('nav.items-per-page')}</div>
+    <div class="col-md-auto">{msg:t('nav.items-per-page')}</div>
   </div>
 {/fragment}
 
-{#fragment id=product_results rendered=false}
+{#fragment id=product_results products rendered=false}
   <div>
     {#each products}
       <div class="border bg-subtle-light">

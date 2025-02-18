@@ -42,7 +42,7 @@ public class EngineProducer {
     private final ApplicationContext context; // TODO: rename context, as spring would do it
     private final QuteProperties config;
     private final Engine engine;
-    private final MessageSource messageSource;
+    private final ApplicationContext applicationContext;
 
     public EngineProducer(
             QuteProperties config,
@@ -51,9 +51,8 @@ public class EngineProducer {
             List<NamespaceResolver> namespaceResolvers,
             List<ParserHook> parserHooks,
             ApplicationContext context,
-            MessageSource messageSource
 //            Environment environment
-    ) {
+            ApplicationContext applicationContext) {
         /* TODO: check what needs to be done here
             this.templateRoots = context.getTemplateRoots();                    // probably can be put into the QuteProperties
             this.defaultLocale = locales.defaultLocale;                         // can be put into QuteProperties
@@ -61,7 +60,6 @@ public class EngineProducer {
          */
         this.config = config;
         this.context = context;
-        this.messageSource = messageSource;
 
         log.info("initializing something in qute starter");
 
@@ -181,6 +179,7 @@ public class EngineProducer {
         }
 
         Qute.setEngine(engine);
+        this.applicationContext = applicationContext;
     }
 
     @Bean
@@ -308,15 +307,21 @@ public class EngineProducer {
 
     private Object resolveMessage(EvalContext ctx) {
         Locale locale = LocaleContextHolder.getLocale();
-        String key = ctx.getName();
         var params = ctx.getParams()
                 .stream()
                 .map(ctx::evaluate)
                 .map(CompletionStage::toCompletableFuture)
                 .map(CompletableFuture::resultNow)
-                .toArray();
+                .toList();
 
-        return messageSource.getMessage(key, params, locale);
+        var key = (String) params.getFirst();
+        List<Object> args = new ArrayList<>();
+
+        if (params.size() > 1) {
+            args = params.subList(1, params.size());
+        }
+
+        return applicationContext.getMessage(key, args.toArray(), locale);
     }
 
     static class ResourceTemplateLocation implements TemplateLocation {

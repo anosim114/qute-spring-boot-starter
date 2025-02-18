@@ -128,6 +128,6 @@ however some part of the syntax to retrieve messages
 from a message bundle is still valid:
 
 ```qute
-{msg:some-key('some', 'params', 'for the message')}
-{msg:some-other-key(oneVariable, 42)}
+{msg:t('some-key', 'with', 'params', 'for the message')}
+{msg:t('some-other-key', oneVariable, 42)}
 ```
