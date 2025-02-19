@@ -14,7 +14,10 @@ import java.util.Locale;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-@SpringBootTest(classes = { EngineProducer.class })
+@SpringBootTest(
+        classes = { EngineProducer.class },
+        properties = "logging.level.root=DEBUG"
+)
 @ExtendWith(OutputCaptureExtension.class)
 @ActiveProfiles("dev")
 public class QuteViewResolverDevTest {
