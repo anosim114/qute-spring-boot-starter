@@ -17,7 +17,7 @@ public class QuteProperties {
     /*
      * General Configs
      */
-    public List<String> suffixes = List.of("", ".qute.html", ".qute.txt", ".html", ".txt");
+    public List<String> suffixes = List.of("", ".qute.html");
 
     public String prefix = "/templates/";
 

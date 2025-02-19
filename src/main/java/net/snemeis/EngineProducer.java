@@ -2,7 +2,6 @@ package net.snemeis;
 
 import io.quarkus.qute.*;
 import io.quarkus.qute.TemplateLocator.TemplateLocation;
-import jdk.jshell.spi.ExecutionControl.NotImplementedException;
 import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -11,7 +10,6 @@ import org.springframework.boot.autoconfigure.web.reactive.WebFluxAutoConfigurat
 import org.springframework.boot.autoconfigure.web.servlet.WebMvcAutoConfiguration;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.ApplicationContext;
-import org.springframework.context.MessageSource;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.web.servlet.ViewResolver;
@@ -31,13 +29,11 @@ import java.util.concurrent.CompletionStage;
 @EnableConfigurationProperties(QuteProperties.class)
 public class EngineProducer {
 
-    private static Logger log = LoggerFactory.getLogger(EngineProducer.class);
+    private static final Logger log = LoggerFactory.getLogger(EngineProducer.class);
 
     public static final String INJECT_NAMESPACE = "inject";
     public static final String CDI_NAMESPACE = "cdi";
-
     public static final String MSG_NAMESPACE = "msg";
-    public static final String MSG_LOCALE = "q_msg_locale";
 
     private final ApplicationContext context; // TODO: rename context, as spring would do it
     private final QuteProperties config;
@@ -50,18 +46,12 @@ public class EngineProducer {
             List<ValueResolver> valueResolvers,
             List<NamespaceResolver> namespaceResolvers,
             List<ParserHook> parserHooks,
-            ApplicationContext context,
-//            Environment environment
-            ApplicationContext applicationContext) {
-        /* TODO: check what needs to be done here
-            this.templateRoots = context.getTemplateRoots();                    // probably can be put into the QuteProperties
-            this.defaultLocale = locales.defaultLocale;                         // can be put into QuteProperties
-            this.templateContents = Map.copyOf(context.getTemplateContents());  // needs to be read out when the application starts
-         */
+            ApplicationContext context
+    ) {
         this.config = config;
         this.context = context;
 
-        log.info("initializing something in qute starter");
+        log.debug("initializing something in qute starter");
 
         EngineBuilder builder = Engine.builder();
 
@@ -80,7 +70,7 @@ public class EngineProducer {
         builder.addValueResolver(ValueResolvers.orEmpty());
         // Note that arrays are handled specifically during validation
         builder.addValueResolver(ValueResolvers.arrayResolver());
-        // Additional value resolvers
+        // Additional user-provided value resolvers
         for (ValueResolver valueResolver : valueResolvers) {
             builder.addValueResolver(valueResolver);
         }
@@ -92,11 +82,6 @@ public class EngineProducer {
             builder.strictRendering(false);
 
             builder.addResultMapper(new PropertyNotFoundThrowException());
-            /*
-            if (environment.acceptsProfiles(Profiles.of("dev"))) {
-                builder.addResultMapper(new PropertyNotFoundThrowException());
-            }
-            */
         }
 
         // Escape some characters for HTML/XML templates
@@ -119,11 +104,6 @@ public class EngineProducer {
         for (SectionHelperFactory<?> sectionHelperFactory : sectionHelperFactories) {
             builder.addSectionHelper(sectionHelperFactory);
         }
-
-        // TODO: Also do this in spring?
-        // Allow anyone to customize the builder
-        // collect custom builder customizations before actually building the engine
-        // builderReady.fire(builder);
 
         // Resolve @Named beans
         builder.addNamespaceResolver(NamespaceResolver.builder(INJECT_NAMESPACE).resolve(this::resolveInject).build());
@@ -168,9 +148,6 @@ public class EngineProducer {
         builder.timeout(config.timeout);
         builder.useAsyncTimeout(config.useAsyncTimeout);
 
-        // TODO: is this needed???
-        // engineReady.fire(engine);
-
         // Set the engine instance
         this.engine = builder.build();
 
@@ -179,17 +156,12 @@ public class EngineProducer {
         }
 
         Qute.setEngine(engine);
-        this.applicationContext = applicationContext;
+        this.applicationContext = context;
     }
 
     @Bean
     ViewResolver quteViewResolver() {
         return new QuteViewResolver(config.cachingEnabled);
-    }
-
-    // Not needed for spring??
-    void onShutdown() throws NotImplementedException {
-        throw new NotImplementedException("no shutdown handler is implemented");
     }
 
     private Resolver createResolver(String resolverClassName) {
@@ -221,19 +193,19 @@ public class EngineProducer {
 //    }
 
     private Optional<TemplateLocation> locate(String path) {
-        log.info("locating template {}", path);
+        log.debug("locating template {}", path);
         // TODO: test that    devmode resolves files by filepath
         // TODO: test that no devmode resolves files by classpath
         // if path is explicitly excluded
         if (config.templatePathExclude.matcher(path).matches()) {
-            log.info("skipping template because of template-exclude-path config");
+            log.debug("skipping template because of template-exclude-path config");
             return Optional.empty();
         }
 
         // if dev-mode try resolving via filepath
         if (config.devMode) {
             String templatePath = config.devPrefix + path;
-            log.info("Resolving file-mode template: {}", templatePath);
+            log.debug("Resolving file-mode template: {}", templatePath);
 
             for (String suffix : config.suffixes) {
                 String pathWithSuffix = templatePath + suffix;
@@ -254,13 +226,13 @@ public class EngineProducer {
         }
 
         // TODO: fill this via config parameter
-        List<String> classPathPrefixes = List.of("lib1", "lib2");
+        List<String> devIgnoreFilePath = List.of("lib1", "lib2");
         // TODO: properly calculate and actullay use
         boolean isExclusivelyInClassPathForExampleFragments = false;
 
         // First try to locate file-based templates
         String templatePath = config.prefix + path;
-        log.info("Resolving class-mode template: {}", templatePath);
+        log.debug("Resolving class-mode template: {}", templatePath);
 
         // Try path with suffixes
         for (String suffix : config.suffixes) {
@@ -289,7 +261,7 @@ public class EngineProducer {
         try {
             contentType = Files.probeContentType(Path.of(path));
         } catch (Exception ex) {
-            log.error("could not determine content type of template");
+            log.warn("could not determine content type of template");
             contentType = "application/octet-stream";
         }
 

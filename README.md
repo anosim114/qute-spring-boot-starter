@@ -38,8 +38,6 @@ Add required dependency
 
 The starter then autoconfigures a Qute engine instance and a template ViewResolver.
 
-> :info: By default, the templates are expected at /resources/templates/.
-
 ### Using the ViewResolver
 
 ```qute
@@ -75,35 +73,58 @@ public String index() {
         .data(Map.of("name", "World"))
         .render();
 }
+
+// or
+
+@GetMapping("/") 
+@ResponseBody
+public String index() {
+    return Qute.fmt('Hello {name}!')
+        .data(Map.of("name", "World"))
+        .render();
+}
 ```
 
 ## Configuration
 
-Original configuration and their explanations: [Qute Reference Guide 4.15. Configuration Reference](https://quarkus.io/guides/qute-reference#configuration-reference).
+For all configuration options of this starter take a look at the
+[qute properties](https://github.com/anosim114/qute-spring-boot-starter/blob/master/src/main/java/net/snemeis/QuteProperties.java)
+file.
 
+For the quarkus configuration and their explanations: [Qute Reference Guide 4.15. Configuration Reference](https://quarkus.io/guides/qute-reference#configuration-reference).
+(The ones for this starter are leaned on the original implementation).
+
+Example configuration for local development:
 ```properties
-# default values, can be overwritten
+# to load templates from filepath instead of classpath (direct editing feedback)
+# good if coupled with something like:
+# spring.resources.static-locations=file:///${user.dir}/src/main/resources/static/
+spring.qute.dev-mode = true
+# set path to filepath
+spring.qute.dev-prefix = ${user.dir}/src/main/resources/templates/
+# for hot-reloading in dev-mode
+# (tip: good when coupled with custom vite config to force page reload on file save
+# https://github.com/ElMassimo/vite-plugin-full-reload, see laravel using this for example)
+spring.qute.caching-enabled = false
+# to be able to resolve filenames like 'index', 'index.html' or 'index.qute.html'
+spring.qute.suffixes = ,.html,.qute.html
+```
 
-# The list of suffixes used when attempting to locate a template file
-# Notice: the first entry is an empty '' resulting in the possibility of providing the full file name, e.g. 'template.qute.json'
-spring.qute.suffixes=,qute.html,qute.txt,html,txt
-# The folder in which the templates reside in
-spring.qute.prefix=/templates/
-# This regular expression is used to exclude template files from the templates directory
-spring.qute.template-path-exclude=^\..|.\/\..*$
-# The list of content types for which the ', ", <, > and & characters are escaped
-spring.qute.escapeContentTypes=text/html,text/xml,application/xml,application/xhtml+xml
-# The default charset of the templates files
-spring.qute.default-charset=UTF-8
-# Specify whether the parser should remove standalone lines from the output
-spring.qute.remove-standalone-lines=true
-# If set to true then Results.NotFound values will always result in a TemplateException and the rendering is aborted.
-spring.qute.strict-rendering=true
-# Activate dev-mode (file-path used for template resolving)
-spring.qute.dev-mode=false
-# Set the dev-mode template prefix (file path is being used instead of classpath)
-# for better hot-reload capabilities
-spring.qute.dev-prefix=${user.dir}/src/main/resources/templates/
+## Adding value and namespace resolvers
+
+Beans of type `ValueResolver` and `NamespaceResolver` are collected
+and registered as resolvers on initialization.
+(As well as `ParserHooks` because the original implementation had this as well)
+
+Example:
+```java
+@Configuration
+class ValueResolverConfig {
+  @Bean
+  ValueResolver valueResolverA() {
+      return new ValueResolverA();
+  }
+}
 ```
 
 ## Reference
