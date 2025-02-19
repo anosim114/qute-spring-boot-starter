@@ -204,20 +204,19 @@ public class EngineProducer {
 
         // if dev-mode try resolving via filepath
         if (config.devMode) {
-            String templatePath = config.devPrefix + path;
-            log.debug("Resolving file-mode template: {}", templatePath);
+            log.debug("Resolving file-mode template: {}", config.devPrefix + path);
 
             for (String suffix : config.suffixes) {
-                String pathWithSuffix = templatePath + suffix;
+                String templatePath = config.devPrefix + path + suffix;
 
-                File file = new File(pathWithSuffix);
+                File file = new File(templatePath);
                 if (!file.exists() && file.isDirectory()) {
                     continue;
                 }
 
                 try {
                     var content = FileUtils.readFileToString(file, StandardCharsets.UTF_8);
-                    return Optional.of(new ContentTemplateLocation(content, createVariant(path)));
+                    return Optional.of(new ContentTemplateLocation(content, createVariant(templatePath)));
 
                 } catch (Exception ex) {
                     continue;

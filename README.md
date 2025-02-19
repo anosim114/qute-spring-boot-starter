@@ -23,6 +23,37 @@ enabling various Spring specific features to be used instead of Quarkus's.
 It demonstrates how to set up and use Qute in a Spring Boot application,
 offering a better alternative to other templating engines like for example Thymeleaf.
 
+```qute
+{@String name = 'World'}
+
+{#include layout}
+
+  {#title}A Qute Readme{/title}
+  
+  {#content}
+    <h1>
+        Hello {name}!
+    </h1>
+    
+    <p>{msg:t('readme.welcome-message')}</p>
+  {/content}
+  
+{/include}
+```
+
+## Why you should use Qute as a templating language
+
+- Qute supports implementations of component libraries
+(see [example-component-lib](/example-component-lib)
+and [example-backend](/example-backend) as reference implementation)
+- Qute natively supports slotting (unlike thymeleaf)
+- Qute has a pleasant syntax (unlike thymeleaf)
+- Qute supports improved developer-experience (ex. hot-reloading capabilities)
+- Qute is backed by major corporations (whoever works on Quarkus)
+- Qute is actively maintained (unlike thymeleaf)
+
+For a rough overview of Qute's features read the 
+[Qute Reference Guide](https://quarkus.io/guides/qute-reference)
 
 ## Usage
 
@@ -108,6 +139,8 @@ spring.qute.dev-prefix = ${user.dir}/src/main/resources/templates/
 spring.qute.caching-enabled = false
 # to be able to resolve filenames like 'index', 'index.html' or 'index.qute.html'
 spring.qute.suffixes = ,.html,.qute.html
+# to get parsing mistakes in the templates
+logging.level.io.quarkus=DEBUG
 ```
 
 ## Adding value and namespace resolvers

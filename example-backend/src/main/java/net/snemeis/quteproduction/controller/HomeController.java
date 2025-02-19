@@ -14,23 +14,9 @@ import java.util.stream.IntStream;
 @Controller
 public class HomeController {
 
-    @GetMapping("/engine")
-    String engine(Model model) {
-        // manual dev mode
-        // ============================
-//        Qute.engine().clearTemplates();
-        // ----------------------------
-
-        // dummy data
-        List<String> filters = List.of("filter.availability", "filter.product_type", "filter.approbation");
-        List<Product> products = IntStream.range(0, 10).mapToObj((num) -> generateProduct()).toList();
-
-        model.addAttribute("filters", filters);
-        model.addAttribute("hits", 999);
-        model.addAttribute("products", products);
-
-        // set model data and render template
-        return "engin";
+    @GetMapping("/components")
+    String components() {
+        return "components";
     }
 
     @GetMapping("/")
@@ -38,7 +24,7 @@ public class HomeController {
     String index(Model model) {
         // manual dev mode
         // ============================
-//        Qute.engine().clearTemplates();
+        Qute.engine().clearTemplates();
         // ----------------------------
 
         // dummy data

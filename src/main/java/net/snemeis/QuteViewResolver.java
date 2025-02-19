@@ -1,18 +1,27 @@
 package net.snemeis;
 
 import io.quarkus.qute.Qute;
+import io.quarkus.qute.Template;
 import io.quarkus.qute.Variant;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import lombok.Getter;
 import lombok.NonNull;
 import org.springframework.web.servlet.View;
 import org.springframework.web.servlet.ViewResolver;
+import org.springframework.core.Ordered;
+import org.springframework.web.servlet.view.AbstractView;
+import org.springframework.web.servlet.view.InternalResourceViewResolver;
+import org.springframework.web.servlet.view.UrlBasedViewResolver;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Locale;
 import java.util.Map;
 
-public class QuteViewResolver implements ViewResolver {
+public class QuteViewResolver implements ViewResolver, Ordered {
+
+    @Getter
+    private final int order = Ordered.HIGHEST_PRECEDENCE;
 
     Boolean cachingEnabled;
 
@@ -31,23 +40,30 @@ public class QuteViewResolver implements ViewResolver {
             return null;
         }
 
-        var contentType = template.getVariant().map(Variant::getContentType).orElse("text/plain");
+        return new QuteView(template);
+    }
 
-        return new View() {
-            @Override
-            public String getContentType() {
-                return contentType;
-            }
+    static class QuteView implements View {
+        private final Template template;
+        private final String contentType;
 
-            @Override
-            public void render(Map<String, ?> model, @NonNull HttpServletRequest request, @NonNull HttpServletResponse response) throws Exception {
-                // TODO: add RequestContext attribute to data
-                var html = template.render(model);
+        public QuteView(Template template) {
+            this.template = template;
+            this.contentType = template.getVariant().map(Variant::getContentType).orElse("text/plain");
+        }
 
-                response.setContentType(getContentType());
-                response.setCharacterEncoding(StandardCharsets.UTF_8.name());
-                response.getWriter().write(html);
-            }
-        };
+        @Override
+        public String getContentType() {
+            return contentType;
+        }
+
+        @Override
+        public void render(Map<String, ?> model, HttpServletRequest request, HttpServletResponse response) throws Exception {
+            var html = template.render(model);
+
+            response.setContentType(contentType);
+            response.setCharacterEncoding(StandardCharsets.UTF_8.name());
+            response.getWriter().write(html);
+        }
     }
 }
