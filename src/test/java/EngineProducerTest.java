@@ -94,7 +94,7 @@ public class EngineProducerTest {
         String message = messageSource.getMessage("name", null, "www", Locale.ENGLISH);
 
         // execute
-        var template = Qute.engine().parse("Hello {msg:name}!");
+        var template = Qute.engine().parse("Hello {msg:t('name')}!");
         var out = template.render();
 
         // check
@@ -106,7 +106,7 @@ public class EngineProducerTest {
         // prepare
 
         // execute
-        var template = Qute.engine().parse("Hello {msg:parameterized(1, 2)}");
+        var template = Qute.engine().parse("Hello {msg:t('parameterized', 1, 2)}");
         var out = template.render();
 
         // check
@@ -119,7 +119,7 @@ public class EngineProducerTest {
         var data = Map.of("v1", 1, "v2", "nitarou");
 
         // execute
-        var template = Qute.engine().parse("Hello {msg:parameterized(v1, v2)}");
+        var template = Qute.engine().parse("Hello {msg:t('parameterized', v1, v2)}");
         var out = template.render(data);
 
         // check
