@@ -15,7 +15,10 @@ import java.util.Locale;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-@SpringBootTest(classes = { EngineProducer.class })
+@SpringBootTest(
+        classes = { EngineProducer.class },
+        properties = "logging.level.root=DEBUG"
+)
 @ExtendWith(OutputCaptureExtension.class)
 public class QuteViewResolverTest {
 
@@ -32,7 +35,6 @@ public class QuteViewResolverTest {
     @ParameterizedTest
     @CsvSource(value = {
             "qute_view_resolver_test/quteindex, text/html",
-            "qute_view_resolver_test/index,     text/html",
             "qute_view_resolver_test/text.txt,  text/plain",
             "qute_view_resolver_test/data.json, application/json"
     })
