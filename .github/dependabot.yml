@@ -5,7 +5,17 @@
 
 version: 2
 updates:
-  - package-ecosystem: "maven" # See documentation for possible values
-    directory: "/" # Location of package manifests
+  # Maven Dependencies 
+  - package-ecosystem: "maven"
+    directory: "/"
     schedule:
       interval: "weekly"
+    groups:
+      applies-to: version-updates
+      
+  # GitHub Actions
+  - package-ecosystem: "github-actions"
+    schedule:
+      interval: "weekly"
+    groups:
+      applies-to: version-updates
