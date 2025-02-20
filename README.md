@@ -2,7 +2,7 @@
 [![Maven Central](https://img.shields.io/maven-central/v/net.snemeis/qute-spring-boot-starter.svg)](https://central.sonatype.com/artifact/net.snemeis/qute-spring-boot-starter)
 
 <p align="center">
-    <img src="/images/qute_spring.png" alt="Logo" width="400" />
+    <img src="/images/qute-spring.png" alt="Logo" width="400" />
 </p>
 
 <h1 align="center">Qute Spring Boot Starter</h1> 
