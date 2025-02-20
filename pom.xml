@@ -6,22 +6,27 @@
 
     <groupId>net.snemeis</groupId>
     <artifactId>qute-spring-boot-starter</artifactId>
-    <version>0.0.6</version>
+    <version>0.0.7</version>
     <name>Qute Spring Boot Starter</name>
     <description>Starter of the Quarkus Qute templating engine for Spring Boot</description>
     <url>https://github.com/anosim114/qute-spring-boot-starter</url>
+
     <scm>
       <url>https://github.com/anosim114/qute-spring-boot-starter</url>
     </scm>
+
     <developers>
       <developer>
         <id>anosim114</id>
         <url>https://github.com/anosim114/qute-spring-boot-starter</url>
       </developer>
     </developers>
+
     <licenses>
         <license>
-            <name>bsd-2</name>
+            <name>BSD 2-Clause License</name>
+            <url>https://opensource.org/licenses/BSD-2-Clause</url>
+            <distribution>repo</distribution>
         </license>
     </licenses>
 
@@ -83,6 +88,15 @@
     </dependencies>
 
     <build>
+        <resources>
+            <resource>
+                <directory>./</directory>
+                <includes>
+                    <include>LICENSE</include>
+                    <include>NOTICE</include>
+                </includes>
+            </resource>
+        </resources>
         <plugins>
             <plugin>
                 <groupId>org.sonatype.central</groupId>
