@@ -11,11 +11,19 @@ updates:
     schedule:
       interval: "weekly"
     groups:
-      applies-to: version-updates
+      updates:
+        update-types:
+          - "patch"
+          - "minor"
+          - "major"
       
   # GitHub Actions
   - package-ecosystem: "github-actions"
     schedule:
       interval: "weekly"
     groups:
-      applies-to: version-updates
+      updates:
+        update-types:
+          - "patch"
+          - "minor"
+          - "major"
