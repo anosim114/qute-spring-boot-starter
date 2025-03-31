@@ -293,8 +293,8 @@ public class EngineProducer {
             .getClass()
             .getMethods())
           .filter(method -> method.accessFlags().contains(AccessFlag.STATIC))
-          .findFirst()
-          .get()
+          .toList()
+          .get(1)
           .invoke(null, context.getBase())
         );
       }
