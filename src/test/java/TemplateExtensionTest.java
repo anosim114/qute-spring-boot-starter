@@ -4,7 +4,6 @@ import net.snemeis.EngineProducer;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 
-import java.util.Arrays;
 import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -46,8 +45,8 @@ public class TemplateExtensionTest {
       return num * multiplicationFactor;
     }
 
-    public static Integer addAll(Integer num, Integer... additions) {
-      return Arrays.stream(additions).reduce(num, Integer::sum);
+    public static Integer addAll(Integer num, Integer one, Integer two, Integer three) {
+      return num + one + two + three;
     }
   }
 }

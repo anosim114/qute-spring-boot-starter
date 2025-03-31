@@ -242,6 +242,7 @@ import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
+import java.util.stream.Stream;
 
 @AutoConfiguration(after = {WebMvcAutoConfiguration.class, WebFluxAutoConfiguration.class})
 @EnableConfigurationProperties(QuteProperties.class)
@@ -285,6 +286,13 @@ public class EngineProducer {
       @SneakyThrows
       @Override
       public CompletionStage<Object> resolve(EvalContext context) {
+        int resolvIdx = switch (context.getName()) {
+          case "multiplyBy" -> 2;
+          case "addAll" -> 0;
+          default -> 1;
+        };
+        var params = context.getParams().stream().map(param -> param.getLiteralValue().resultNow()).toList();
+        List<Object> args = Stream.concat(Stream.of(context.getBase()), params.stream()).toList();
         return CompletedStage.of(Arrays.stream(beans
             .values()
             .stream()
@@ -294,8 +302,8 @@ public class EngineProducer {
             .getMethods())
           .filter(method -> method.accessFlags().contains(AccessFlag.STATIC))
           .toList()
-          .get(1)
-          .invoke(null, context.getBase())
+          .get(resolvIdx)
+          .invoke(null, args.toArray())
         );
       }
     });
