@@ -4,6 +4,7 @@ import net.snemeis.EngineProducer;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 
+import java.util.Locale;
 import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -34,6 +35,14 @@ public class TemplateExtensionTest {
     assertEquals("7", out);
   }
 
+  @Test
+  void stringCapitalizeExtension() {
+    Integer number = 1;
+    String out = Qute.fmt("{str.capitalize}", Map.of("str", "abc - the quteness likes a bee"));
+
+    assertEquals("ABC - THE QUTENESS LIKES A BEE", out);
+  }
+
   @TemplateExtension
   public static class IntExtension {
 
@@ -47,6 +56,10 @@ public class TemplateExtensionTest {
 
     public static Integer addAll(Integer num, Integer one, Integer two, Integer three) {
       return num + one + two + three;
+    }
+
+    public static String capitalize(String str) {
+      return str.toUpperCase(Locale.getDefault());
     }
   }
 }

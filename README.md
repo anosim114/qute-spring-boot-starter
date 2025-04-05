@@ -160,6 +160,25 @@ class ValueResolverConfig {
 }
 ```
 
+## Adding Template Extensions (or helper methods in a RoR sense)
+Like in the quarkus qute reference guide described, classes annotated with 
+`@TemplateExtension` are collected at startup and registered.
+Current rules are that  extension methods must be static and only the bare
+annotation is supported, so no annotation arguments.
+
+```java
+@TemplateExtension
+class StringExtensions {
+  public static String capitalize(String str) {
+    return str.toUpperCase();
+  }
+}
+```
+
+```html
+{@java.lang.String humblebeeSounds} <!-- 'bzzzzzzzzzz' -->
+The humble-bee goes: "{humblebeeSounds.capitalize}". <!-- transformed to 'BZZZZZZZZZZ' -->
+```
 ## Reference
 
 For a general reference see the [Qute Reference Guide](https://quarkus.io/guides/qute-reference).

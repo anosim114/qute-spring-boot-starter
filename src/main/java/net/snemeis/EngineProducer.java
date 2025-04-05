@@ -217,7 +217,6 @@ package net.snemeis;
 
 import io.quarkus.qute.*;
 import io.quarkus.qute.TemplateLocator.TemplateLocation;
-import lombok.SneakyThrows;
 import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -233,7 +232,6 @@ import org.springframework.web.servlet.ViewResolver;
 import java.io.*;
 import java.lang.reflect.AccessFlag;
 import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 import java.net.URL;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
@@ -242,7 +240,6 @@ import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
-import java.util.stream.Stream;
 
 @AutoConfiguration(after = {WebMvcAutoConfiguration.class, WebFluxAutoConfiguration.class})
 @EnableConfigurationProperties(QuteProperties.class)
@@ -270,45 +267,7 @@ public class EngineProducer {
     log.debug("initializing something in qute starter");
 
     EngineBuilder builder = Engine.builder();
-    Map<String, Object> beans = context.getBeansWithAnnotation(TemplateExtension.class);
-    beans.forEach((ext, val) -> {
-      List<Method> methods = Arrays.stream(val.getClass().getMethods())
-        .filter(method -> method.accessFlags().contains(AccessFlag.STATIC))
-        .toList();
-      methods.forEach(method -> {
-        var parameters = method.getParameters();
-        var extParamType = Arrays.stream(method.getParameterTypes()).findFirst();
-        log.info("param type: {}", extParamType);
-      });
-    });
 
-    builder.addValueResolver(new ValueResolver() {
-      @SneakyThrows
-      @Override
-      public CompletionStage<Object> resolve(EvalContext context) {
-        int resolvIdx = switch (context.getName()) {
-          case "multiplyBy" -> 2;
-          case "addAll" -> 0;
-          default -> 1;
-        };
-        var params = context.getParams().stream().map(param -> param.getLiteralValue().resultNow()).toList();
-        List<Object> args = Stream.concat(Stream.of(context.getBase()), params.stream()).toList();
-        return CompletedStage.of(Arrays.stream(beans
-            .values()
-            .stream()
-            .findFirst()
-            .get()
-            .getClass()
-            .getMethods())
-          .filter(method -> method.accessFlags().contains(AccessFlag.STATIC))
-          .toList()
-          .get(resolvIdx)
-          .invoke(null, args.toArray())
-        );
-      }
-    });
-
-    // We don't register the map resolver because of param declaration validation
     builder.addValueResolver(ValueResolvers.thisResolver());
     builder.addValueResolver(ValueResolvers.orResolver());
     builder.addValueResolver(ValueResolvers.trueResolver());
@@ -325,6 +284,9 @@ public class EngineProducer {
     builder.addValueResolver(ValueResolvers.arrayResolver());
     // Additional user-provided value resolvers
     for (ValueResolver valueResolver : valueResolvers) {
+      builder.addValueResolver(valueResolver);
+    }
+    for (ValueResolver valueResolver : getTemplateExtensions()) {
       builder.addValueResolver(valueResolver);
     }
 
@@ -414,6 +376,22 @@ public class EngineProducer {
   @Bean
   ViewResolver quteViewResolver() {
     return new QuteViewResolver(config.cachingEnabled);
+  }
+
+  private List<TemplateExtensionValueResolver> getTemplateExtensions() {
+    // collect TemplateExtensions
+    Map<String, Object> beans = applicationContext.getBeansWithAnnotation(TemplateExtension.class);
+    var templateExtensions =  beans.values().stream()
+      .map(Object::getClass)
+      .map(Class::getMethods)
+      .map(Arrays::asList)
+      .flatMap(Collection::stream)
+      .filter(method -> method.accessFlags().contains(AccessFlag.STATIC))
+      .toList();
+
+    return templateExtensions.stream()
+      .map(TemplateExtensionValueResolver::new)
+      .toList();
   }
 
   private Resolver createResolver(String resolverClassName) {
