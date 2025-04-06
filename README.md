@@ -179,6 +179,33 @@ class StringExtensions {
 {@java.lang.String humblebeeSounds} <!-- 'bzzzzzzzzzz' -->
 The humble-bee goes: "{humblebeeSounds.capitalize}". <!-- transformed to 'BZZZZZZZZZZ' -->
 ```
+
+## Adding output transformation logic
+A feature inspired from Vite, is the possibility to transform the output of a rendering.
+For this purpose it's possible to implement a bean which implements the 
+`TemplatePostProcessor` interface.
+
+With this it's possible to state a condition when the transformation should happen
+and the logic for the transformation itself.
+```java
+@Component
+class VersionTransformation implements TemplatePostProcessor {
+    @Overrides
+    Boolean appliesTo(HttpServletRequest req) {
+      // default implementation is -> true
+      return Objects.nonNull(request.getAttribute("doTransform"));
+    }
+    
+    @Overrides
+    String process(String renderedTemplate) {
+        return renderedTemplate.replaceAll("VERSION", "1.0.0");
+    }
+}
+```
+
+With this all templates which fulfill the condition will have the string
+"VERSION" globally replaced to a version string number.
+
 ## Reference
 
 For a general reference see the [Qute Reference Guide](https://quarkus.io/guides/qute-reference).

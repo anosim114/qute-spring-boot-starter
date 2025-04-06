@@ -374,8 +374,8 @@ public class EngineProducer {
   }
 
   @Bean
-  ViewResolver quteViewResolver() {
-    return new QuteViewResolver(config.cachingEnabled);
+  ViewResolver quteViewResolver(List<TemplatePostProcessor> postProcessors) {
+    return new QuteViewResolver(config.cachingEnabled, postProcessors);
   }
 
   private List<TemplateExtensionValueResolver> getTemplateExtensions() {

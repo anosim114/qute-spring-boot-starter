@@ -9,7 +9,7 @@ import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-@SpringBootTest(classes = {EngineProducer.class, TemplateExtensionTest.IntExtension.class})
+@SpringBootTest(classes = {EngineProducer.class, TemplateExtensionTest.SomeExtensions.class})
 public class TemplateExtensionTest {
   @Test
   void singleArgExtension() {
@@ -44,7 +44,7 @@ public class TemplateExtensionTest {
   }
 
   @TemplateExtension
-  public static class IntExtension {
+  public static class SomeExtensions {
 
     public static Integer doubleIt(Integer somNum) {
       return somNum * 2;

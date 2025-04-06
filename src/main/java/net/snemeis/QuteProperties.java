@@ -14,70 +14,63 @@ import java.util.regex.Pattern;
 @ConfigurationProperties(prefix = "spring.qute")
 public class QuteProperties {
 
-    /*
-     * General Configs
-     */
-    public List<String> suffixes = List.of("", ".qute.html");
+  /*
+   * General Configs
+   */
+  public List<String> suffixes = List.of("", ".qute.html");
 
-    public String prefix = "/templates/";
+  public String prefix = "/templates/";
 
-    public String devPrefix = System.getProperty("user.dir") + "/src/main/resources/templates/";
+  public String devPrefix = System.getProperty("user.dir") + "/src/main/resources/templates/";
 
-    public Boolean devMode = false;
+  public Boolean devMode = false;
 
 //    public Map<String, String> contentTypes = Map.of("qute.html", "text/html");
 
-    public List<String> typeCheckExcludes = List.of();
+  public List<String> typeCheckExcludes = List.of();
 
-    public Pattern templatePathExclude = Pattern.compile("^\\..*|.*\\/\\..*$");
+  public Pattern templatePathExclude = Pattern.compile("^\\..*|.*\\/\\..*$");
 
-    public String iterationMetadataPrefix = "<alias_>";
+  public String iterationMetadataPrefix = "<alias_>";
 
-    public List<String> escapeContentTypes = List.of("text/html", "text/xml", "application/xml", "application/xhtml+xml");
+  public List<String> escapeContentTypes = List.of("text/html", "text/xml", "application/xml", "application/xhtml+xml");
 
-    public Charset defaultCharset = StandardCharsets.UTF_8;
+  public Charset defaultCharset = StandardCharsets.UTF_8;
 
-    public Boolean cachingEnabled = true;
+  public Boolean cachingEnabled = true;
+  /*
+   * Runtime Configs
+   */
+  public PropertyNotFoundStrategy propertyNotFoundStrategy = PropertyNotFoundStrategy.DEFAULT;
+  public boolean removeStandaloneLines = true;
 
-    /*
-     * Temporary Extra Configs
+  // List<String> templatePaths = List.of();
+  public boolean strictRendering = true;
+  public long timeout = 10000;
+  public boolean useAsyncTimeout = true;
+  /*
+   * Temporary Extra Configs
+   */
+  List<String> resolverClasses = List.of(); // TODO: is this relevant?
+  Locale defaultLocale = Locale.ENGLISH; // TODO: is this relevant?
+
+  public enum PropertyNotFoundStrategy {
+    /**
+     * Output the {@code NOT_FOUND} constant.
      */
-    List<String> resolverClasses = List.of(); // TODO: is this relevant?
-
-    Locale defaultLocale = Locale.ENGLISH; // TODO: is this relevant?
-
-    // List<String> templatePaths = List.of();
-
-    /*
-     * Runtime Configs
+    DEFAULT,
+    /**
+     * No operation - no output.
      */
-    public PropertyNotFoundStrategy propertyNotFoundStrategy = PropertyNotFoundStrategy.DEFAULT;
+    NOOP,
 
-    public boolean removeStandaloneLines = true;
-
-    public boolean strictRendering = true;
-
-    public long timeout = 10000;
-
-    public boolean useAsyncTimeout = true;
-
-    public enum PropertyNotFoundStrategy {
-        /**
-         * Output the {@code NOT_FOUND} constant.
-         */
-        DEFAULT,
-        /**
-         * No operation - no output.
-         */
-        NOOP,
-
-        /**
-         * Throw a {@link TemplateException}.
-         */
-        THROW_EXCEPTION,
-        /**
-         * Output the original expression string, e.g. <code>{foo.name}</code>.
-         */
-        OUTPUT_ORIGINAL
-    }
+    /**
+     * Throw a {@link TemplateException}.
+     */
+    THROW_EXCEPTION,
+    /**
+     * Output the original expression string, e.g. <code>{foo.name}</code>.
+     */
+    OUTPUT_ORIGINAL
+  }
 }
