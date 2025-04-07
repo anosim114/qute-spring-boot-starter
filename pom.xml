@@ -35,7 +35,7 @@
         <maven.compiler.target>21</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <version.spring>3.4.4</version.spring>
-        <version.lombok>1.18.36</version.lombok>
+        <version.lombok>1.18.38</version.lombok>
     </properties>
 
     <dependencies>
@@ -43,7 +43,7 @@
         <dependency>
             <groupId>io.quarkus</groupId>
             <artifactId>quarkus-qute</artifactId>
-            <version>3.21.0</version>
+            <version>3.21.1</version>
             <exclusions>
                 <exclusion>
                     <groupId>io.quarkus</groupId>
