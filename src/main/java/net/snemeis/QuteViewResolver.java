@@ -8,6 +8,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.Ordered;
 import org.springframework.web.servlet.View;
 import org.springframework.web.servlet.ViewResolver;
@@ -17,6 +18,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
+@Slf4j
 @RequiredArgsConstructor
 public class QuteViewResolver implements ViewResolver, Ordered {
 
@@ -28,6 +30,8 @@ public class QuteViewResolver implements ViewResolver, Ordered {
 
   @Override
   public View resolveViewName(@NonNull String viewName, @NonNull Locale locale) {
+    log.debug("resolving view {}", viewName);
+
     if (!this.cachingEnabled) {
       Qute.engine().clearTemplates();
     }
