@@ -1,6 +1,6 @@
 import configs.TestLocaleConfig;
 import io.quarkus.qute.Qute;
-import net.snemeis.EngineProducer;
+import net.snemeis.configurations.EngineProducer;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;

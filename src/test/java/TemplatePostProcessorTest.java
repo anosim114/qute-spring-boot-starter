@@ -1,7 +1,8 @@
 import jakarta.servlet.http.HttpServletRequest;
-import net.snemeis.EngineProducer;
+import net.snemeis.configurations.EngineProducer;
 import net.snemeis.QuteViewResolver;
 import net.snemeis.TemplatePostProcessor;
+import net.snemeis.configurations.QuteViewResolverConfiguration;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -17,6 +18,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @SpringBootTest(classes = {
   EngineProducer.class,
+  QuteViewResolverConfiguration.class,
   TemplatePostProcessorTest.VersionTransformer.class,
   TemplatePostProcessorTest.CapitalizeTransformer.class
 })

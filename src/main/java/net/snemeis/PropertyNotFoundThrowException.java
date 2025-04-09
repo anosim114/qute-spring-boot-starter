@@ -226,7 +226,7 @@ import io.quarkus.qute.TemplateNode.Origin;
 /*
  * Taken from:
  */
-class PropertyNotFoundThrowException implements ResultMapper {
+public class PropertyNotFoundThrowException implements ResultMapper {
 
   @Override
   public int getPriority() {

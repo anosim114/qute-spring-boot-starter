@@ -1,6 +1,6 @@
 import io.quarkus.qute.Qute;
 import io.quarkus.qute.TemplateExtension;
-import net.snemeis.EngineProducer;
+import net.snemeis.configurations.EngineProducer;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 

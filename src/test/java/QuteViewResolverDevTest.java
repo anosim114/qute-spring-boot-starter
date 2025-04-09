@@ -1,5 +1,6 @@
-import net.snemeis.EngineProducer;
+import net.snemeis.configurations.EngineProducer;
 import net.snemeis.QuteViewResolver;
+import net.snemeis.configurations.QuteViewResolverConfiguration;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -15,7 +16,7 @@ import java.util.Locale;
 import static org.junit.jupiter.api.Assertions.*;
 
 @SpringBootTest(
-        classes = { EngineProducer.class },
+        classes = { EngineProducer.class, QuteViewResolverConfiguration.class },
         properties = "logging.level.root=DEBUG"
 )
 @ExtendWith(OutputCaptureExtension.class)

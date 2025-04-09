@@ -213,21 +213,22 @@
    See the License for the specific language governing permissions and
    limitations under the License.
  */
-package net.snemeis;
+package net.snemeis.configurations;
 
 import io.quarkus.qute.*;
 import io.quarkus.qute.TemplateLocator.TemplateLocation;
+import lombok.AllArgsConstructor;
+import net.snemeis.PropertyNotFoundThrowException;
+import net.snemeis.QuteProperties;
+import net.snemeis.TemplateExtensionValueResolver;
 import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
-import org.springframework.boot.autoconfigure.web.reactive.WebFluxAutoConfiguration;
-import org.springframework.boot.autoconfigure.web.servlet.WebMvcAutoConfiguration;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.i18n.LocaleContextHolder;
-import org.springframework.web.servlet.ViewResolver;
 
 import java.io.*;
 import java.lang.reflect.AccessFlag;
@@ -241,7 +242,8 @@ import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 
-@AutoConfiguration(after = {WebMvcAutoConfiguration.class, WebFluxAutoConfiguration.class})
+@AllArgsConstructor
+@AutoConfiguration
 @EnableConfigurationProperties(QuteProperties.class)
 public class EngineProducer {
 
@@ -250,19 +252,16 @@ public class EngineProducer {
   public static final String MSG_NAMESPACE = "msg";
   private static final Logger log = LoggerFactory.getLogger(EngineProducer.class);
   private final QuteProperties config;
-  private final Engine engine;
   private final ApplicationContext applicationContext;
 
-  public EngineProducer(
+  @Bean
+  public Engine quteEngine(
     QuteProperties config,
     List<SectionHelperFactory<?>> sectionHelperFactories,
     List<ValueResolver> valueResolvers,
     List<NamespaceResolver> namespaceResolvers,
-    List<ParserHook> parserHooks,
-    ApplicationContext context
+    List<ParserHook> parserHooks
   ) {
-    this.config = config;
-    this.applicationContext = context;
 
     log.debug("initializing something in qute starter");
 
@@ -363,19 +362,14 @@ public class EngineProducer {
     builder.timeout(config.timeout);
     builder.useAsyncTimeout(config.useAsyncTimeout);
 
-    // Set the engine instance
-    this.engine = builder.build();
-
     if (!config.cachingEnabled) {
       Qute.disableCache();
     }
 
+    // Set the engine instance
+    Engine engine = builder.build();
     Qute.setEngine(engine);
-  }
-
-  @Bean
-  ViewResolver quteViewResolver(List<TemplatePostProcessor> postProcessors) {
-    return new QuteViewResolver(config.cachingEnabled, postProcessors);
+    return engine;
   }
 
   private List<TemplateExtensionValueResolver> getTemplateExtensions() {

@@ -1,7 +1,5 @@
 import io.quarkus.qute.Qute;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import net.snemeis.EngineProducer;
+import net.snemeis.configurations.EngineProducer;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 

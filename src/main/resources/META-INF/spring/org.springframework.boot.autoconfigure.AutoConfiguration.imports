@@ -1,1 +1,2 @@
-net.snemeis.EngineProducer
+net.snemeis.configurations.EngineProducer
+net.snemeis.configurations.QuteViewResolverConfiguration

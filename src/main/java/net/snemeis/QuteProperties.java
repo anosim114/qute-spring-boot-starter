@@ -51,8 +51,8 @@ public class QuteProperties {
   /*
    * Temporary Extra Configs
    */
-  List<String> resolverClasses = List.of(); // TODO: is this relevant?
-  Locale defaultLocale = Locale.ENGLISH; // TODO: is this relevant?
+  public List<String> resolverClasses = List.of(); // TODO: is this relevant?
+  public Locale defaultLocale = Locale.ENGLISH; // TODO: is this relevant?
 
   public enum PropertyNotFoundStrategy {
     /**
