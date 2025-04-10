@@ -337,7 +337,7 @@ public class EngineProducer {
         builder.addValueResolver((ValueResolver) resolver);
       }
 //            log.debug("Added generated value resolver: {}", resolverClass);
-      System.out.println("added some value resolver");
+      log.debug("added some value resolver");
     }
 
     // Add locator
