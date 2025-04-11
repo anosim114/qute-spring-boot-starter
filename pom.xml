@@ -46,6 +46,16 @@
         <version.mavenJavadocPlugin>3.11.2</version.mavenJavadocPlugin>
     </properties>
 
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-autoconfigure-processor</artifactId>
+                <version>${version.spring}</version>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+
     <dependencies>
         <!-- Qute dependency-->
         <dependency>
