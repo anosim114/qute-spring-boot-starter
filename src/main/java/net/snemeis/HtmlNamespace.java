@@ -51,6 +51,10 @@ public class HtmlNamespace {
       .map(Object::toString)
       .collect(Collectors.joining(" "));
 
+    if (values.isBlank()) {
+      return "";
+    }
+
     return new RawString("class=\"%s\"".formatted(values));
   }
 }

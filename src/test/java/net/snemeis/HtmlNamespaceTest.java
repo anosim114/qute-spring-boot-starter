@@ -54,6 +54,15 @@ class HtmlNamespaceTest {
   }
 
   @Test
+  void htmlAttrs_classesEmpty() {
+    String output = Qute.fmt("{html:class(theValue)}")
+      .data("theValue", null)
+      .render();
+
+    assertEquals("", output);
+  }
+
+  @Test
   void htmlAttrs_classesWithNullValues() {
     String output = Qute.fmt("{html:class(theValue, nullValue, 'without non value class')}")
       .data("theValue", "value")
