@@ -221,6 +221,8 @@ With this all templates which fulfill the condition will have the string
 <!-- non values will be omitted -->
 <div {html:class("some static classes", nullVar, someVar)}></div>
 <!-- => <div id="some static classes some-var"></div> -->
+<div {html:attr("someKey", nullVar)}></div>
+<!-- => <div></div> -->
 ```
 
 ## Reference

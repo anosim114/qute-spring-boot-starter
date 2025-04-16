@@ -30,6 +30,21 @@ class HtmlNamespaceTest {
   }
 
   @Test
+  void htmlAttrs_withNull() {
+    String output;
+
+    output = Qute.fmt("{html:attr('someKey', nullValue)}")
+      .data("nullValue", null)
+      .render();
+    assertEquals("", output);
+
+    output = Qute.fmt("{html:attr(nullValue, 'some-value')}")
+      .data("nullValue", null)
+      .render();
+    assertEquals("", output);
+  }
+
+  @Test
   void htmlAttrs_classes() {
     String output = Qute.fmt("{html:class(theValue, 'some other values')}")
       .data("theValue", "value")

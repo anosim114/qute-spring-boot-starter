@@ -35,6 +35,10 @@ public class HtmlNamespace {
     var attrName = ctx.evaluate(nameParam).toCompletableFuture().resultNow();
     var attrValue = ctx.evaluate(valueParam).toCompletableFuture().resultNow();
 
+    if (attrName == null || attrValue == null) {
+      return "";
+    }
+
     return new RawString("%s=\"%s\"".formatted(attrName, attrValue));
   }
 
