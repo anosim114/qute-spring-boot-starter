@@ -218,6 +218,7 @@ package net.snemeis.configurations;
 import io.quarkus.qute.*;
 import io.quarkus.qute.TemplateLocator.TemplateLocation;
 import lombok.AllArgsConstructor;
+import net.snemeis.HtmlNamespace;
 import net.snemeis.PropertyNotFoundThrowException;
 import net.snemeis.QuteProperties;
 import net.snemeis.TemplateExtensionValueResolver;
@@ -323,6 +324,9 @@ public class EngineProducer {
     builder.addNamespaceResolver(NamespaceResolver.builder(INJECT_NAMESPACE).resolve(this::resolveInject).build());
     builder.addNamespaceResolver(NamespaceResolver.builder(CDI_NAMESPACE).resolve(this::resolveInject).build());
     builder.addNamespaceResolver(NamespaceResolver.builder(MSG_NAMESPACE).resolve(this::resolveMessage).build());
+
+    builder.addNamespaceResolver(HtmlNamespace.htmlNamespaceResolver());
+
     // Additional namespace resolvers
     for (NamespaceResolver namespaceResolver : namespaceResolvers) {
       builder.addNamespaceResolver(namespaceResolver);

@@ -206,6 +206,23 @@ class VersionTransformation implements TemplatePostProcessor {
 With this all templates which fulfill the condition will have the string
 "VERSION" globally replaced to a version string number.
 
+
+## Html helpers
+
+```html
+<!-- adding normal attributes -->
+<div {html:attr("id", "some-id")} {html:attr(someKey, someVar)}></div>
+<!-- => <div id="some-id" somekey="somevar"></div> -->
+
+<!-- adding classes -->
+<div {html:class("some static classes", someVar1, someVar2)}></div>
+<!-- => <div class="some static classes var1 var2"></div> -->
+
+<!-- non values will be omitted -->
+<div {html:class("some static classes", nullVar, someVar)}></div>
+<!-- => <div id="some static classes some-var"></div> -->
+```
+
 ## Reference
 
 For a general reference see the [Qute Reference Guide](https://quarkus.io/guides/qute-reference).
