@@ -1,0 +1,10 @@
+Qute Spring Boot Starter
+Copyright 2025 anosim114
+
+This product contains pieces of code developed
+for Quarkus (https://github.com/quarkusio/quarkus)
+
+The initial Developer for the copied, derived or inspired work of
+src/main/java/net/snemeis/EngineProducer and
+src/main/java/net/snemeis/PropertyNotFoundThrowException
+is the Quarkus Project (https://github.com/quarkusio/quarkus).
