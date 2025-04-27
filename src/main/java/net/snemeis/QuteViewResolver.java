@@ -26,7 +26,6 @@ public class QuteViewResolver implements ViewResolver, Ordered {
   private final int order = Ordered.HIGHEST_PRECEDENCE;
 
   private final Boolean cachingEnabled;
-  private final List<TemplatePostProcessor> postProcessors;
 
   @Override
   public View resolveViewName(@NonNull String viewName, @NonNull Locale locale) {
@@ -41,17 +40,15 @@ public class QuteViewResolver implements ViewResolver, Ordered {
       return null;
     }
 
-    return new QuteView(template, postProcessors);
+    return new QuteView(template);
   }
 
   static class QuteView implements View {
     private final Template template;
-    private final List<TemplatePostProcessor> postProcessors;
     private final String contentType;
 
-    public QuteView(Template template, List<TemplatePostProcessor> postProcessors) {
+    public QuteView(Template template) {
       this.template = template;
-      this.postProcessors = postProcessors;
       this.contentType = template.getVariant().map(Variant::getContentType).orElse("text/plain");
     }
 
@@ -63,12 +60,6 @@ public class QuteViewResolver implements ViewResolver, Ordered {
     @Override
     public void render(Map<String, ?> model, HttpServletRequest request, HttpServletResponse response) throws Exception {
       var html = template.render(model);
-
-      for (TemplatePostProcessor processor : postProcessors) {
-        if (processor.appliesTo(request)) {
-          html = processor.process(html);
-        }
-      }
 
       response.setContentType(contentType);
       response.setCharacterEncoding(StandardCharsets.UTF_8.name());

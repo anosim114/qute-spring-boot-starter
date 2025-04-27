@@ -54,11 +54,10 @@ public class HtmlEscaperTest {
     }
 
     @Test
-    public void testEscaping() throws IOException {
+    public void testEscaping() {
         HtmlEscaper html = new HtmlEscaper(List.of(Variant.TEXT_HTML));
         assertEquals("Čolek", html.escape("Čolek"));
         assertEquals("&lt;strong&gt;Čolek&lt;/strong&gt;", html.escape("<strong>Čolek</strong>"));
         assertEquals("&lt;a&gt;&amp;link&quot;&#39;&lt;/a&gt;", html.escape("<a>&link\"'</a>"));
     }
-
 }

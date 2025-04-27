@@ -261,27 +261,35 @@ public class EngineProducer {
     List<SectionHelperFactory<?>> sectionHelperFactories,
     List<ValueResolver> valueResolvers,
     List<NamespaceResolver> namespaceResolvers,
-    List<ParserHook> parserHooks
+    List<ResultMapper> resultMappers,
+    List<ParserHook> parserHooks,
+    List<TemplateLocator> templateLocators
   ) {
 
-    log.debug("initializing something in qute starter");
-
+    log.debug("Starting Qute engine initialization");
     EngineBuilder builder = Engine.builder();
 
-    builder.addValueResolver(ValueResolvers.thisResolver());
-    builder.addValueResolver(ValueResolvers.orResolver());
-    builder.addValueResolver(ValueResolvers.trueResolver());
+    // Value Resolvers
+    // ================
+    builder.addValueResolver(ValueResolvers.arrayResolver()); // Note that arrays are handled specifically during validation
     builder.addValueResolver(ValueResolvers.collectionResolver());
-    builder.addValueResolver(ValueResolvers.mapperResolver());
-    builder.addValueResolver(ValueResolvers.mapEntryResolver());
-    builder.addValueResolver(ValueResolvers.mapResolver());
-    // foo.string.raw returns a RawString which is never escaped
-    builder.addValueResolver(ValueResolvers.rawResolver()); // TODO: look into this for learning
+    builder.addValueResolver(ValueResolvers.listResolver());
     builder.addValueResolver(ValueResolvers.logicalAndResolver());
     builder.addValueResolver(ValueResolvers.logicalOrResolver());
+    builder.addValueResolver(ValueResolvers.mapEntryResolver());
+    builder.addValueResolver(ValueResolvers.mapResolver());
+    builder.addValueResolver(ValueResolvers.mapperResolver());
+    builder.addValueResolver(ValueResolvers.minusResolver());
     builder.addValueResolver(ValueResolvers.orEmpty());
-    // Note that arrays are handled specifically during validation
-    builder.addValueResolver(ValueResolvers.arrayResolver());
+    builder.addValueResolver(ValueResolvers.orResolver());
+    builder.addValueResolver(ValueResolvers.plusResolver());
+    builder.addValueResolver(ValueResolvers.rawResolver());
+    builder.addValueResolver(ValueResolvers.thisResolver());
+    builder.addValueResolver(ValueResolvers.trueResolver());
+    builder.addValueResolver(new NamedArgument.SetValueResolver());
+    // Fallback reflection resolver
+    builder.addValueResolver(new ReflectionValueResolver());
+
     // Additional user-provided value resolvers
     for (ValueResolver valueResolver : valueResolvers) {
       builder.addValueResolver(valueResolver);
@@ -290,28 +298,27 @@ public class EngineProducer {
       builder.addValueResolver(valueResolver);
     }
 
+
+    // Result Mappers
+    // ================
     // Enable/disable strict rendering
     if (config.strictRendering) {
       builder.strictRendering(true);
     } else {
       builder.strictRendering(false);
-
       builder.addResultMapper(new PropertyNotFoundThrowException());
     }
 
     // Escape some characters for HTML/XML templates
     builder.addResultMapper(new HtmlEscaper(List.copyOf(config.escapeContentTypes)));
 
-    // Fallback reflection resolver
-    builder.addValueResolver(new ReflectionValueResolver());
+    for (ResultMapper resultMapper : resultMappers) {
+      builder.addResultMapper(resultMapper);
+    }
 
-    // Remove standalone lines if desired
-    builder.removeStandaloneLines(config.removeStandaloneLines);
 
-    // TODO: what's this?
-    // Iteration metadata prefix
-    builder.iterationMetadataPrefix(config.iterationMetadataPrefix);
-
+    // Section Helpers
+    // ================
     // Default section helpers
     builder.addDefaultSectionHelpers();
 
@@ -320,17 +327,46 @@ public class EngineProducer {
       builder.addSectionHelper(sectionHelperFactory);
     }
 
+
+    // Namespace Resolvers
+    // ================
+    builder.addNamespaceResolver(new FragmentNamespaceResolver(FragmentNamespaceResolver.FRG));
+    builder.addNamespaceResolver(new FragmentNamespaceResolver(FragmentNamespaceResolver.FRAGMENT));
+    builder.addNamespaceResolver(new FragmentNamespaceResolver(FragmentNamespaceResolver.CAP));
+    builder.addNamespaceResolver(new FragmentNamespaceResolver(FragmentNamespaceResolver.CAPTURE));
+    builder.addNamespaceResolver(new NamedArgument.ParamNamespaceResolver());
+    builder.addNamespaceResolver(HtmlNamespace.htmlNamespaceResolver()); // TODO: redo this
+
     // Resolve @Named beans
     builder.addNamespaceResolver(NamespaceResolver.builder(INJECT_NAMESPACE).resolve(this::resolveInject).build());
     builder.addNamespaceResolver(NamespaceResolver.builder(CDI_NAMESPACE).resolve(this::resolveInject).build());
-    builder.addNamespaceResolver(NamespaceResolver.builder(MSG_NAMESPACE).resolve(this::resolveMessage).build());
 
-    builder.addNamespaceResolver(HtmlNamespace.htmlNamespaceResolver());
+    // Resolve i18n messages
+    builder.addNamespaceResolver(NamespaceResolver.builder(MSG_NAMESPACE).resolve(this::resolveMessage).build());
 
     // Additional namespace resolvers
     for (NamespaceResolver namespaceResolver : namespaceResolvers) {
       builder.addNamespaceResolver(namespaceResolver);
     }
+
+
+    // Template Locators
+    // ================
+    builder.addLocator(this::locate);
+
+    for (TemplateLocator locator : templateLocators) {
+      builder.addLocator(locator);
+    }
+
+
+    // Various
+    // ================
+    // Remove standalone lines if desired
+    builder.removeStandaloneLines(config.removeStandaloneLines);
+
+    // TODO: what's this?
+    // Iteration metadata prefix
+    builder.iterationMetadataPrefix(config.iterationMetadataPrefix);
 
     // Add generated resolvers
     for (String resolverClass : config.resolverClasses) {
@@ -340,18 +376,14 @@ public class EngineProducer {
       } else {
         builder.addValueResolver((ValueResolver) resolver);
       }
-//            log.debug("Added generated value resolver: {}", resolverClass);
-      log.debug("added some value resolver");
+      log.debug("Added generated value resolver: {}", resolverClass);
     }
-
-    // Add locator
-    builder.addLocator(this::locate);
-    // registerCustomLocators(builder, locators); // custom locators
 
     // Add parser hooks
     for (ParserHook parserHook : parserHooks) {
       builder.addParserHook(parserHook);
     }
+
     // Add a special parser hook for Qute.fmt() methods
     builder.addParserHook(new Qute.IndexedArgumentsParserHook());
 
@@ -379,7 +411,7 @@ public class EngineProducer {
   private List<TemplateExtensionValueResolver> getTemplateExtensions() {
     // collect TemplateExtensions
     Map<String, Object> beans = applicationContext.getBeansWithAnnotation(TemplateExtension.class);
-    var templateExtensions =  beans.values().stream()
+    var templateExtensions = beans.values().stream()
       .map(Object::getClass)
       .map(Class::getMethods)
       .map(Arrays::asList)

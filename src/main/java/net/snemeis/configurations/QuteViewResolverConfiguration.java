@@ -4,7 +4,6 @@ import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import net.snemeis.QuteProperties;
 import net.snemeis.QuteViewResolver;
-import net.snemeis.TemplatePostProcessor;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.web.servlet.WebMvcAutoConfiguration;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
@@ -22,8 +21,8 @@ public class QuteViewResolverConfiguration {
   private final QuteProperties config;
 
   @Bean
-  ViewResolver quteViewResolver(List<TemplatePostProcessor> postProcessors) {
+  ViewResolver quteViewResolver() {
     log.debug("initializing the qute view resolver");
-    return new QuteViewResolver(config.cachingEnabled, postProcessors);
+    return new QuteViewResolver(config.cachingEnabled);
   }
 }

@@ -1,102 +1,132 @@
 package io.quarkus.qute;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import io.quarkus.qute.CacheSectionHelper.Cache;
+import lombok.extern.slf4j.Slf4j;
+import net.snemeis.configurations.EngineProducer;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.context.TestConfiguration;
+import org.springframework.boot.test.system.CapturedOutput;
+import org.springframework.boot.test.system.OutputCaptureExtension;
+import org.springframework.context.annotation.Bean;
 
+import java.lang.reflect.InvocationTargetException;
+import java.util.Map;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
 
-import org.junit.jupiter.api.Test;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
-import io.quarkus.qute.CacheSectionHelper.Cache;
-
+@SpringBootTest(classes = { EngineProducer.class, CacheSectionTest.SectionHelperConfig.class })
+@ExtendWith(OutputCaptureExtension.class)
 public class CacheSectionTest {
 
-    @Test
-    public void testCached() {
-        ConcurrentMap<String, CompletionStage<ResultNode>> map = new ConcurrentHashMap<>();
-        Engine engine = engineWithCache(map);
+  @Autowired
+  public ConcurrentMap cacheMap;
 
-        Template template = engine.parse("{#cached}{counter.val}{/cached}", null, "foo.html");
-        Counter counter = new Counter();
+  Engine engine;
 
-        assertEquals("1", template.data("counter", counter).render());
-        assertEquals(1, map.size());
-        // {counter.val} was cached
-        assertEquals("1", template.data("counter", counter).render());
-        // Invalidate all cache entries
-        map.clear();
-        assertEquals("2", template.data("counter", counter).render());
-        assertEquals("2", template.data("counter", counter).render());
-        assertEquals(1, map.size());
-        assertEquals("foo.html:1:1_", map.keySet().iterator().next());
+  @BeforeEach
+  void initEngine() {
+    this.engine = Qute.engine();
+    this.cacheMap.clear();
+  }
+
+  @Test
+  public void testCached() {
+    Template template = engine.parse("{#cached}{counter.val}{/cached}", null, "foo.html");
+    Counter counter = new Counter();
+
+    assertEquals("1", template.data("counter", counter).render());
+    assertEquals(1, cacheMap.size());
+    // {counter.val} was cached
+    assertEquals("1", template.data("counter", counter).render());
+    // Invalidate all cache entries
+    cacheMap.clear();
+    assertEquals("2", template.data("counter", counter).render());
+    assertEquals("2", template.data("counter", counter).render());
+    assertEquals(1, cacheMap.size());
+    assertEquals("foo.html:1:1_", cacheMap.keySet().iterator().next());
+  }
+
+  @Test
+  public void testCachedWithKey() {
+    Template template = engine.parse("{#cached key=myKey}{counter.val}{/cached}");
+    Counter counter = new Counter();
+
+    assertEquals("1", template.data("counter", counter, "myKey", "foo").render());
+    assertEquals("2", template.data("counter", counter, "myKey", "bar").render());
+    assertEquals("1", template.data("counter", counter, "myKey", "foo").render());
+    assertEquals("2", template.data("counter", counter, "myKey", "bar").render());
+    assertEquals("3", template.data("counter", counter, "myKey", "baz").render());
+    assertEquals(3, cacheMap.size());
+  }
+
+  // TODO: tests seem to work correctly, just the failure is registered globally and not within the check
+  @Test
+  public void testCachedWithFailure(CapturedOutput out) {
+    Template template = engine.parse("{#cached}{counter.getVal(fail)}{/cached}");
+    Counter counter = new Counter();
+
+    assertThrows(java.lang.IllegalStateException.class, () -> template.data("counter", counter, "fail", true).render());
+    // The failure is cached
+    assertThrows(java.lang.IllegalStateException.class, () -> template.data("counter", counter, "fail", false).render());
+    assertEquals(1, cacheMap.size());
+    // Invalidate all cache entries
+    cacheMap.clear();
+    assertEquals("1", template.data("counter", counter, "fail", false).render());
+    // The success is cached
+    assertEquals("1", template.data("counter", counter, "fail", true).render());
+    assertEquals(1, cacheMap.size());
+  }
+
+  public static class Counter {
+
+    private final AtomicInteger val = new AtomicInteger();
+
+    public int getVal() {
+      return val.incrementAndGet();
     }
 
-    @Test
-    public void testCachedWithKey() {
-        ConcurrentMap<String, CompletionStage<ResultNode>> map = new ConcurrentHashMap<>();
-        Engine engine = engineWithCache(map);
-
-        Template template = engine.parse("{#cached key=myKey}{counter.val}{/cached}");
-        Counter counter = new Counter();
-
-        assertEquals("1", template.data("counter", counter, "myKey", "foo").render());
-        assertEquals("2", template.data("counter", counter, "myKey", "bar").render());
-        assertEquals("1", template.data("counter", counter, "myKey", "foo").render());
-        assertEquals("2", template.data("counter", counter, "myKey", "bar").render());
-        assertEquals("3", template.data("counter", counter, "myKey", "baz").render());
-        assertEquals(3, map.size());
+    public int getVal(boolean failure) {
+      if (failure) {
+        throw new IllegalStateException();
+      }
+      return val.incrementAndGet();
     }
 
-    @Test
-    public void testCachedWithFailure() {
-        ConcurrentMap<String, CompletionStage<ResultNode>> map = new ConcurrentHashMap<>();
-        Engine engine = engineWithCache(map);
+  }
 
-        Template template = engine.parse("{#cached}{counter.getVal(fail)}{/cached}");
-        Counter counter = new Counter();
-
-        assertThrows(IllegalStateException.class, () -> template.data("counter", counter, "fail", true).render());
-        // The failure is cached
-        assertThrows(IllegalStateException.class, () -> template.data("counter", counter, "fail", false).render());
-        assertEquals(1, map.size());
-        // Invalidate all cache entries
-        map.clear();
-        assertEquals("1", template.data("counter", counter, "fail", false).render());
-        // The success is cached
-        assertEquals("1", template.data("counter", counter, "fail", true).render());
-        assertEquals(1, map.size());
+  @TestConfiguration
+  static class SectionHelperConfig {
+    Logger logger = LoggerFactory.getLogger(SectionHelperConfig.class);
+    @Bean
+    ConcurrentMap<String, CompletionStage<ResultNode>> cacheMap() {
+      return new ConcurrentHashMap<>();
     }
 
-    private Engine engineWithCache(ConcurrentMap<String, CompletionStage<ResultNode>> map) {
-        return Engine.builder().addDefaults().addValueResolver(new ReflectionValueResolver())
-                .addSectionHelper(new CacheSectionHelper.Factory(new Cache() {
-                    @Override
-                    public CompletionStage<ResultNode> getValue(String key,
-                            Function<String, CompletionStage<ResultNode>> loader) {
-                        return map.computeIfAbsent(key, k -> loader.apply(k));
-                    }
-                })).build();
-    }
+    @Bean
+    public SectionHelperFactory someSectionHelper (ConcurrentMap<String, CompletionStage<ResultNode>> cacheMap) {
+      return new CacheSectionHelper.Factory(new Cache() {
+        @Override
+        public CompletionStage<ResultNode> getValue(
+          String key,
+          Function<String, CompletionStage<ResultNode>> loader
+        ) {
 
-    public static class Counter {
-
-        private final AtomicInteger val = new AtomicInteger();
-
-        public int getVal() {
-            return val.incrementAndGet();
+          logger.info("cache was hit with key: {}", key);
+          return cacheMap.computeIfAbsent(key, loader::apply);
         }
-
-        public int getVal(boolean failure) {
-            if (failure) {
-                throw new IllegalStateException();
-            }
-            return val.incrementAndGet();
-        }
-
+      });
     }
-
+  }
 }

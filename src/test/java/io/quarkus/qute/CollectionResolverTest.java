@@ -1,47 +1,50 @@
 package io.quarkus.qute;
 
-import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import net.snemeis.configurations.EngineProducer;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.springframework.boot.test.context.SpringBootTest;
 
 import java.util.ArrayList;
 import java.util.List;
 
-import org.junit.jupiter.api.Test;
+import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
+@SpringBootTest(classes = {EngineProducer.class})
 public class CollectionResolverTest {
 
-    @Test
-    public void testResolver() {
-        List<String> list = new ArrayList<>();
-        list.add("Lu");
+  Engine engine;
 
-        Engine engine = Engine.builder()
-                .addSectionHelper(new LoopSectionHelper.Factory())
-                .addValueResolver(ValueResolvers.thisResolver())
-                .addValueResolver(ValueResolvers.collectionResolver())
-                .build();
+  @BeforeEach
+  void initEngine() {
+    this.engine = Qute.engine();
+  }
 
-        assertEquals("1,false,true",
-                engine.parse("{this.size},{this.isEmpty},{this.contains('Lu')}").render(list));
-    }
+  @Test
+  public void testResolver() {
+    List<String> list = new ArrayList<>();
+    list.add("Lu");
 
-    @Test
-    public void testListTake() {
-        List<String> list = new ArrayList<>();
-        list.add("Lu");
-        list.add("Roman");
-        list.add("Matej");
+    assertEquals("1,false,true",
+      engine.parse("{this.size},{this.isEmpty},{this.contains('Lu')}").render(list));
+  }
 
-        Engine engine = Engine.builder().addDefaults().build();
+  @Test
+  public void testListTake() {
+    List<String> list = new ArrayList<>();
+    list.add("Lu");
+    list.add("Roman");
+    list.add("Matej");
 
-        assertEquals("Lu,",
-                engine.parse("{#each list.take(1)}{it},{/each}").data("list", list).render());
-        assertEquals("Roman,Matej,",
-                engine.parse("{#each list.takeLast(2)}{it},{/each}").data("list", list).render());
-        assertThatExceptionOfType(IndexOutOfBoundsException.class)
-                .isThrownBy(() -> engine.parse("{list.take(12).size}").data("list", list).render());
-        assertThatExceptionOfType(IndexOutOfBoundsException.class)
-                .isThrownBy(() -> engine.parse("{list.take(-1).size}").data("list", list).render());
-    }
+    assertEquals("Lu,",
+      engine.parse("{#each list.take(1)}{it},{/each}").data("list", list).render());
+    assertEquals("Roman,Matej,",
+      engine.parse("{#each list.takeLast(2)}{it},{/each}").data("list", list).render());
+    assertThatExceptionOfType(IndexOutOfBoundsException.class)
+      .isThrownBy(() -> engine.parse("{list.take(12).size}").data("list", list).render());
+    assertThatExceptionOfType(IndexOutOfBoundsException.class)
+      .isThrownBy(() -> engine.parse("{list.take(-1).size}").data("list", list).render());
+  }
 
 }

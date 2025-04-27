@@ -160,53 +160,6 @@ class ValueResolverConfig {
 }
 ```
 
-## Adding Template Extensions (or helper methods in a RoR sense)
-Like in the quarkus qute reference guide described, classes annotated with 
-`@TemplateExtension` are collected at startup and registered.
-Current rules are that  extension methods must be static and only the bare
-annotation is supported, so no annotation arguments.
-
-```java
-@TemplateExtension
-class StringExtensions {
-  public static String capitalize(String str) {
-    return str.toUpperCase();
-  }
-}
-```
-
-```html
-{@java.lang.String humblebeeSounds} <!-- 'bzzzzzzzzzz' -->
-The humble-bee goes: "{humblebeeSounds.capitalize}". <!-- transformed to 'BZZZZZZZZZZ' -->
-```
-
-## Adding output transformation logic
-A feature inspired from Vite, is the possibility to transform the output of a rendering.
-For this purpose it's possible to implement a bean which implements the 
-`TemplatePostProcessor` interface.
-
-With this it's possible to state a condition when the transformation should happen
-and the logic for the transformation itself.
-```java
-@Component
-class VersionTransformation implements TemplatePostProcessor {
-    @Overrides
-    Boolean appliesTo(HttpServletRequest req) {
-      // default implementation is -> true
-      return Objects.nonNull(request.getAttribute("doTransform"));
-    }
-    
-    @Overrides
-    String process(String renderedTemplate) {
-        return renderedTemplate.replaceAll("VERSION", "1.0.0");
-    }
-}
-```
-
-With this all templates which fulfill the condition will have the string
-"VERSION" globally replaced to a version string number.
-
-
 ## Html helpers
 
 ```html
@@ -229,24 +182,98 @@ With this all templates which fulfill the condition will have the string
 
 For a general reference see the [Qute Reference Guide](https://quarkus.io/guides/qute-reference).
 
-The spring related changes are the following.
+### Quirks
 
-### Qute Reference Guide 4.3. Injecting Beans Directly In Templates
+- Optional variables can't be directly used in an if statement, it will always resolve to true
+  - Good - `{#if optional.isPresent()} this if present {#else} this if empty {/if}`
+  - Bad - `{#if optional} this if present {#else} this if empty {/if}`
+- Output can be transformed with `ResultMapper`
+
+### Qute Parity Table
+
+| Feature                                              | Usable                                                        |
+|------------------------------------------------------|---------------------------------------------------------------|
+| 3.1. Basic Building Blocks                           | Yes, per default                                              |
+| 3.2. Identifiers and Tags                            | Yes, per default                                              |
+| 3.3. Removing Standalone Lines From the Template     |                                                               |
+| 3.4.1. Supported Literals                            | Yes, per default                                              |
+| 3.4.2. Resolution                                    | Yes, per default                                              |
+| 3.4.3. Current Context                               |                                                               |
+| 3.4.4. Built-in Resolvers                            |                                                               |
+| 3.4.5. Arrays                                        |                                                               |
+| 3.4.6. Character Escapes                             |                                                               |
+| 3.4.7. Virtual Methods                               |                                                               |
+| 3.4.8. Evaluation of CompletionStage and Uni Objects |                                                               |
+| 3.4.9. Missing Properties                            |                                                               |
+| 3.5. Sections                                        |                                                               |
+| 3.5.1. Parameters                                    |                                                               |
+| 3.5.2. Loop Section                                  |                                                               |
+| 3.5.3. If Section                                    |                                                               |
+| 3.5.4. When Section                                  |                                                               |
+| 3.5.5. Let Section                                   |                                                               |
+| 3.5.6. With Section                                  |                                                               |
+| 3.5.7. Include Section                               |                                                               |
+| 3.5.8. User-defined Tags                             |                                                               |
+| 3.5.9. Fragments                                     |                                                               |
+| 3.5.10. Eval Section                                 |                                                               |
+| 3.5.11. Cached Section                               | Must be manually implemented                                  |
+| 3.6. Rendering Output                                |                                                               |
+| 3.7. Engine Configuration                            |                                                               |
+| 3.7.1. Value Resolvers                               |                                                               |
+| 3.7.2. Template Locator                              | Partially, implementation of `TemplateLocator` is supported   |
+| 3.7.3. Content Filters                               |                                                               |
+| 3.7.4. Strict Rendering                              |                                                               |
+| 4. Quarkus Integration                               |                                                               |
+| 4.1. Engine Customization                            |                                                               |
+| 4.1.1. Template Locator Registration                 |                                                               |
+| 4.2. Template Variants                               |                                                               |
+| 4.3. Injecting Beans Directly In Templates           | Yes, `{cdi:...}` and `{inject:...}` supported to inject beans |
+| 4.4. Type-safe Expressions                           |                                                               |
+| 4.5. Type-safe Templates                             |                                                               |
+| 4.6. Template Extension Methods                      | Partially                                                     |
+| 4.6.1. Matching by Name                              |                                                               |
+| 4.6.2. Method Parameters                             |                                                               |
+| 4.6.3. Namespace Extension Methods                   |                                                               |
+| 4.6.4. Built-in Template Extensions                  |                                                               |
+| 4.7. @TemplateData                                   | Not yet, TODO: performance reasons                            |
+| 4.7.1. Accessing Static Fields and Methods           |                                                               |
+| 4.7.2. Convenient Annotation For Enums               |                                                               |
+| 4.8. Global Variables                                |                                                               |
+| 4.8.1. Resolving Conflicts                           |                                                               |
+| 4.9. Native Executables                              |                                                               |
+| 4.10. REST Integration                               |                                                               |
+| 4.11. Vert.x Integrations                            |                                                               |
+| 4.12. Development Mode                               |                                                               |
+| 4.13. Testing                                        |                                                               |
+| 4.14. Type-safe Message Bundles                      | Use `{msg:t('key', ...args)}` instead                         |
+| 4.15. Configuration Reference                        |                                                               |
+| 5. Qute Used as a Standalone Library                 | Yes, that's the approach taken here                           |
+
+### 4.3. Injecting Beans Directly In Templates
 
 Since Spring Boot also has beans which can be referenced at runtime, this feature is also supported
-via the `cdi` and `inject` namespaces. So the following snippet is 100% valid:
+via the `cdi` and `inject` namespaces. With this the following snippet is 100% valid:
 ```qute
 {cdi:someService.findSomeValue(10).name} 
 {inject:otherService.fetchSomethingElse()}
 ```
 
-### Qute Reference Guide 4.14. Type-safe Message Bundles
+### 4.6. Template Extension Methods
+Like in the quarkus qute reference guide described, classes annotated with 
+`@TemplateExtension` are collected at startup and registered.
+Current rules are, extension methods must be static and only the bare
+annotation is supported, so no annotation arguments.
 
-This starter does not support type-safe message bundles,
-however some part of the syntax to retrieve messages
-from a message bundle is still valid:
+```java
+@TemplateExtension
+class StringExtensions {
+  public static String capitalize(String str) {
+    return str.toUpperCase();
+  }
+}
+```
 
-```qute
-{msg:t('some-key', 'with', 'params', 'for the message')}
-{msg:t('some-other-key', oneVariable, 42)}
+```html
+{@java.lang.String humblebeeSounds} <!-- 'bzzzzzzzzzz' -->
+The humble-bee goes: "{humblebeeSounds.capitalize}". <!-- transformed to 'BZZZZZZZZZZ' -->
 ```
