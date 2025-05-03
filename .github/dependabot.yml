@@ -11,7 +11,7 @@ updates:
     schedule:
       interval: "weekly"
     groups:
-      all:
+      updates:
         applies-to: version-updates
         update-types:
           - "patch"
