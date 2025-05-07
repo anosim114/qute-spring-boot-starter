@@ -6,7 +6,7 @@
 
     <groupId>net.snemeis</groupId>
     <artifactId>qute-spring-boot-starter</artifactId>
-    <version>0.1.8</version>
+    <version>0.1.9-SNAPSHOT</version>
     <name>Qute Spring Boot Starter</name>
     <description>Starter of the Quarkus Qute templating engine for Spring Boot</description>
     <url>https://github.com/anosim114/qute-spring-boot-starter</url>
