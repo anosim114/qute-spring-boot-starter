@@ -37,7 +37,7 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <version.qute>3.26.3</version.qute>
         <version.slf4j>2.0.17</version.slf4j>
-        <version.spring>3.5.4</version.spring>
+        <version.spring>3.5.6</version.spring>
         <version.lombok>1.18.38</version.lombok>
         <version.commons>2.20.0</version.commons>
         <version.centralPlugin>0.8.0</version.centralPlugin>
