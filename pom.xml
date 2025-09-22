@@ -43,7 +43,7 @@
         <version.centralPlugin>0.8.0</version.centralPlugin>
         <version.mavenGpgPlugin>3.2.8</version.mavenGpgPlugin>
         <version.mavenSourcePlugin>3.3.1</version.mavenSourcePlugin>
-        <version.mavenJavadocPlugin>3.11.3</version.mavenJavadocPlugin>
+        <version.mavenJavadocPlugin>3.12.0</version.mavenJavadocPlugin>
     </properties>
 
     <dependencyManagement>
