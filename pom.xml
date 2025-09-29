@@ -40,7 +40,7 @@
         <version.spring>3.5.4</version.spring>
         <version.lombok>1.18.38</version.lombok>
         <version.commons>2.20.0</version.commons>
-        <version.centralPlugin>0.8.0</version.centralPlugin>
+        <version.centralPlugin>0.9.0</version.centralPlugin>
         <version.mavenGpgPlugin>3.2.8</version.mavenGpgPlugin>
         <version.mavenSourcePlugin>3.3.1</version.mavenSourcePlugin>
         <version.mavenJavadocPlugin>3.11.3</version.mavenJavadocPlugin>
